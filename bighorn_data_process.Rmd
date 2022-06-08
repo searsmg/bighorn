@@ -28,7 +28,7 @@ met <- read_csv(here('bighorn_met_composite.csv')) %>%
   select(-c(datetime, datetime2))
 
 # read in tipping bucket data
-
+rain <- read_csv(here('bighorn_rain_composite.csv'))
 
 
 ```
