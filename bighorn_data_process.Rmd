@@ -1,0 +1,35 @@
+---
+title: "Bighorn data processing"
+author: "Megan Sears"
+date: "6/8/2022"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: journal
+---
+
+```{r open packages}
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(plotly)
+library(ggplot2)
+library(here)
+```
+```{r load in data}
+# read in met data
+# since there are 2 different date formats, duplicate, split, put back together as 1
+met <- read_csv(here('bighorn_met_composite.csv')) %>%
+  mutate(datetime2 = datetime) %>%
+  mutate(datetime2 = mdy_hm(datetime)) %>% 
+  mutate(datetime = ymd_hm(datetime)) %>%
+  mutate(dt_use = coalesce(datetime, datetime2)) %>% 
+  select(-c(datetime, datetime2))
+
+# read in tipping bucket data
+
+
+
+```
+
