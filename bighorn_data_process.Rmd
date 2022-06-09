@@ -28,7 +28,30 @@ met <- read_csv(here('bighorn_met_composite.csv')) %>%
   select(-c(datetime, datetime2))
 
 # read in tipping bucket data
-rain <- read_csv(here('bighorn_rain_composite.csv'))
+# since there are 2 different date formats, duplicate, split, put back together as 1
+rain <- read_csv(here('bighorn_rain_composite_new.csv')) %>%
+  mutate(datetime2 = datetime) %>%
+  mutate(datetime2 = mdy_hm(datetime)) %>% 
+  mutate(datetime = ymd_hm(datetime)) %>%
+  mutate(dt_use = coalesce(datetime, datetime2)) %>% 
+  select(-c(datetime, datetime2))
+
+# read in stage
+
+# read in baro
+
+```
+```{r look at variables}
+snowdepth <- ggplot(met, aes(x= dt_use, y = SnowD_m)) + 
+  geom_point()
+
+ggplotly(snowdepth)
+
+netrad_old <- ggplot(met, aes(x= dt_use, y = Rn_Wm2)) + 
+  geom_point()
+
+ggplotly(netrad_old)
+
 
 
 ```
