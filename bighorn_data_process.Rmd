@@ -1,7 +1,7 @@
 ---
 title: "Bighorn data processing"
 author: "Megan Sears"
-date: "6/8/2022"
+date: "2022-06-17"
 output:
   html_document:
     toc: true
@@ -17,40 +17,86 @@ library(plotly)
 library(ggplot2)
 library(here)
 ```
+
+## Loading in the data
+
 ```{r load in data}
 # read in met data
-# since there are 2 different date formats, duplicate, split, put back together as 1
 met <- read_csv(here('bighorn_met_composite.csv')) %>%
-  mutate(datetime2 = datetime) %>%
-  mutate(datetime2 = mdy_hm(datetime)) %>% 
-  mutate(datetime = ymd_hm(datetime)) %>%
-  mutate(dt_use = coalesce(datetime, datetime2)) %>% 
-  select(-c(datetime, datetime2))
+  mutate(dt_use = parse_date_time(datetime, 
+                                  orders = c('%m/%d/%Y %H:%M',
+                                             '%Y-%m-%d %H:%M'))) %>%
+  select(-datetime)
 
 # read in tipping bucket data
-# since there are 2 different date formats, duplicate, split, put back together as 1
 rain <- read_csv(here('bighorn_rain_composite_new.csv')) %>%
-  mutate(datetime2 = datetime) %>%
-  mutate(datetime2 = mdy_hm(datetime)) %>% 
-  mutate(datetime = ymd_hm(datetime)) %>%
-  mutate(dt_use = coalesce(datetime, datetime2)) %>% 
-  select(-c(datetime, datetime2))
+  mutate(dt_use = parse_date_time(datetime, 
+                                  orders = c('%m/%d/%Y %H:%M',
+                                             '%Y-%m-%d %H:%M'))) %>%
+  select(-datetime)
 
-# read in stage
+# read in stage data
+stage <- read_csv(here('bighorn_stage_composite_new.csv')) %>%
+  mutate(dt_use = parse_date_time(DateTime, 
+                                  orders = c('%m/%d/%Y %H:%M',
+                                             '%m/%d/%y %I:%M:%S %p'))) %>%
+  select(-c(DateTime, T_C)) %>%
+  rename(Pw_kPa = P_kPa)
 
-# read in baro
+# read in baro data
+baro <- read_csv(here('bighorn_baro_composite_new.csv')) %>%
+  mutate(dt_use = parse_date_time(DateTime, 
+                                  orders = c('%m/%d/%Y %H:%M',
+                                             '%m/%d/%y %I:%M:%S %p'))) %>%
+  select(-c(DateTime, T_C)) %>%
+  rename(Pa_kPa = P_kPa)
 
+#join stage and baro DFs to get stage height
+stage <- left_join(stage, baro, by="dt_use")
+
+# get stage in kPa, convert to stage in cm
+stage <- stage %>%
+  mutate(stage_kPa = Pw_kPa -Pa_kPa,
+         stage_cm = stage_kPa * 10.197162129779)
 ```
+
+## Plotting a basic time series of each variable
+
 ```{r look at variables}
 snowdepth <- ggplot(met, aes(x= dt_use, y = SnowD_m)) + 
-  geom_point()
+  geom_point() +
+  ggtitle('snow depth (m)')
 
 ggplotly(snowdepth)
 
 netrad_old <- ggplot(met, aes(x= dt_use, y = Rn_Wm2)) + 
-  geom_point()
+  geom_point() +
+  ggtitle('net rad_old (Wm2)')
 
 ggplotly(netrad_old)
+
+windspeed <- ggplot(met, aes(x= dt_use, y = u_ms)) + 
+  geom_point() +
+  ggtitle('wind speed (m/s)')
+
+ggplotly(windspeed)
+
+sm <- ggplot(met, aes(x=dt_use)) +
+  geom_line(aes(y=VWC_5, color='5cm')) +
+  geom_line(aes(y=VWC_20, color='20cm')) +
+  geom_line(aes(y=VWC_50, color='50cm')) +
+  ggtitle('soil moisture (%)')
+
+ggplotly(sm)
+
+soiltemp <- ggplot(met, aes(x=dt_use)) +
+  geom_line(aes(y=Ts_5, color='5cm')) +
+  geom_line(aes(y=Ts_20, color='20cm')) +
+  geom_line(aes(y=Ts_50, color='50cm')) +
+  ylim(-50,50) + #add this y lim since Ts_20 went back and had high readings 
+  ggtitle('soil temp (deg C)')
+
+ggplotly(soiltemp)
 
 
 
