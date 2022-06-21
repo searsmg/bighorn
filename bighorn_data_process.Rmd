@@ -195,6 +195,32 @@ stageplot <- ggplot(stage %>%
 #ggplotly(stageplot)
 stageplot
 
+```
 
+## Rain and Stage
+
+```{rain and stage}
+
+stage_compare <- stage %>%
+  filter(dt_use > '2020-12-17')
+
+rain_15min <- rain %>%
+  slice(-c(1,2)) %>%
+  group_by(dt_use = cut(dt_use, '15 min')) %>%
+  summarize(precip_mm = sum(precip_mm)) %>%
+  mutate(dt_use = ymd_hms(dt_use))
+
+stage_compare <- left_join(stage_compare, rain_15min, by='dt_use')
+
+stage_rain <- ggplot(stage_compare %>%
+                       drop_na(precip_mm) %>% 
+                     filter(stage_cm > 0),
+                     aes(x = dt_use)) +
+  geom_line(aes(y = precip_mm/10, color = 'precip_cm')) + 
+  geom_line(aes(y = stage_cm/50, color='stage_cm')) +
+  scale_y_continuous(sec.axis = sec_axis(~.*50, name = "stage_cm"))
+  
+stage_rain
+  
 ```
 
