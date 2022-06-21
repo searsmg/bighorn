@@ -11,7 +11,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r open packages}
+```{r open packages, include=FALSE}
 library(tidyverse)
 library(dplyr)
 library(lubridate)
@@ -71,21 +71,24 @@ snowdepth <- ggplot(met, aes(x= dt_use, y = SnowD_m)) +
   ggtitle('snow depth (m)') +
   theme_bw()
 
-ggplotly(snowdepth)
+#ggplotly(snowdepth)
+snowdepth
 
 netrad_old <- ggplot(met, aes(x= dt_use, y = Rn_Wm2)) + 
   geom_point() +
   ggtitle('net rad_old (Wm2)') +
   theme_bw()
 
-ggplotly(netrad_old)
+#ggplotly(netrad_old)
+netrad_old
 
 windspeed <- ggplot(met, aes(x= dt_use, y = u_ms)) + 
   geom_point() +
   ggtitle('wind speed (m/s)') +
   theme_bw()
  
-ggplotly(windspeed)
+#ggplotly(windspeed)
+windspeed
 
 sm <- ggplot(met, aes(x=dt_use)) +
   geom_line(aes(y=VWC_5, color='5cm')) +
@@ -95,7 +98,8 @@ sm <- ggplot(met, aes(x=dt_use)) +
   ylim(-40,100) + #add this ylime since VWC_20 is off and was replaced in May
   theme_bw()
 
-ggplotly(sm)
+#ggplotly(sm)
+sm
 
 soiltemp <- ggplot(met, aes(x=dt_use)) +
   geom_line(aes(y=Ts_5, color='5cm')) +
@@ -105,21 +109,24 @@ soiltemp <- ggplot(met, aes(x=dt_use)) +
   ggtitle('soil temp (deg C)') +
   theme_bw()
 
-ggplotly(soiltemp)
+#ggplotly(soiltemp)
+soiltemp
 
 airtemp <- ggplot(met, aes(x= dt_use, y = Ta_C)) + 
   geom_point() +
   ggtitle('air temp (deg C)') +
   theme_bw()
 
-ggplotly(airtemp)
+#ggplotly(airtemp)
+airtemp
 
 rh <- ggplot(met, aes(x= dt_use, y = RH_percent)) + 
   geom_point() +
   ggtitle('RH (%)') +
   theme_bw()
 
-ggplotly(rh)
+#ggplotly(rh)
+rh
 
 swrad <- ggplot(met, aes(x = dt_use)) +
   geom_line(aes(y=Rs_in, color='SW in')) +
@@ -127,7 +134,8 @@ swrad <- ggplot(met, aes(x = dt_use)) +
   ggtitle('shortwave rad (W/m2)') +
   theme_bw()
 
-ggplotly(swrad)
+#ggplotly(swrad)
+swrad
 
 lwrad <- ggplot(met, aes(x = dt_use)) +
   geom_line(aes(y=Rl_in, color='LW in')) +
@@ -135,21 +143,24 @@ lwrad <- ggplot(met, aes(x = dt_use)) +
   ggtitle('longwave rad (W/m2)') +
   theme_bw()
 
-ggplotly(lwrad)
+#ggplotly(lwrad)
+lwrad
 
 albedo <- ggplot(met, aes(x= dt_use, y = albedo)) + 
   geom_point() +
   ggtitle('albedo') +
   theme_bw()
 
-ggplotly(albedo)
+#ggplotly(albedo)
+albedo
 
 rainplot <- ggplot(rain, aes(x= dt_use, y = precip_mm)) + 
   geom_point() +
   ggtitle('rain_mm') +
   theme_bw()
 
-ggplotly(rainplot)
+#ggplotly(rainplot)
+rainplot
 
 stageplot <- ggplot(stage %>%
                       filter(dt_use > '2020-12-17'), # filter out data before newest install
@@ -158,8 +169,8 @@ stageplot <- ggplot(stage %>%
   ggtitle('stage_update_cm') +
   theme_bw()
 
-ggplotly(stageplot)
-
+#ggplotly(stageplot)
+stageplot
 
 
 ```
