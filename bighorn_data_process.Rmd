@@ -197,7 +197,7 @@ stageplot
 
 ```
 
-## Rain and Stage
+## Rain and Stage at 15 mins
 
 ```{rain and stage}
 
@@ -212,15 +212,15 @@ rain_15min <- rain %>%
 
 stage_compare <- left_join(stage_compare, rain_15min, by='dt_use')
 
-stage_rain <- ggplot(stage_compare %>%
+compare <- ggplot(stage_compare %>%
                        drop_na(precip_mm) %>% 
                      filter(stage_cm > 0),
                      aes(x = dt_use)) +
   geom_line(aes(y = precip_mm/10, color = 'precip_cm')) + 
   geom_line(aes(y = stage_cm/50, color='stage_cm')) +
   scale_y_continuous(sec.axis = sec_axis(~.*50, name = "stage_cm"))
-  
-stage_rain
-  
+
+compare
+
 ```
 
