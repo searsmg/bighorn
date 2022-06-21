@@ -18,6 +18,7 @@ library(lubridate)
 library(plotly)
 library(ggplot2)
 library(here)
+library(scales)
 ```
 
 ## Loading in the data
@@ -28,7 +29,9 @@ met <- read_csv(here('bighorn_met_composite.csv')) %>%
   mutate(dt_use = parse_date_time(datetime, 
                                   orders = c('%m/%d/%Y %H:%M',
                                              '%Y-%m-%d %H:%M'))) %>%
-  select(-datetime)
+  select(-datetime) %>%
+  mutate(Ta2_C = (Ta_F - 32) * 5/9) %>%
+  mutate(Ta_C_use = coalesce(Ta_C, Ta2_C))
 
 # read in tipping bucket data
 rain <- read_csv(here('bighorn_rain_composite_new.csv')) %>%
@@ -69,14 +72,18 @@ stage <- stage %>%
 snowdepth <- ggplot(met, aes(x= dt_use, y = SnowD_m)) + 
   geom_point() +
   ggtitle('snow depth (m)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(snowdepth)
 snowdepth
 
-netrad_old <- ggplot(met, aes(x= dt_use, y = Rn_Wm2)) + 
+netrad_old <- ggplot(met %>%
+                       drop_na(Rn_Wm2),
+                     aes(x= dt_use, y = Rn_Wm2)) + 
   geom_point() +
   ggtitle('net rad_old (Wm2)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(netrad_old)
@@ -85,6 +92,7 @@ netrad_old
 windspeed <- ggplot(met, aes(x= dt_use, y = u_ms)) + 
   geom_point() +
   ggtitle('wind speed (m/s)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
  
 #ggplotly(windspeed)
@@ -96,6 +104,7 @@ sm <- ggplot(met, aes(x=dt_use)) +
   geom_line(aes(y=VWC_50, color='50cm')) +
   ggtitle('soil moisture (%)') +
   ylim(-40,100) + #add this ylime since VWC_20 is off and was replaced in May
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(sm)
@@ -107,14 +116,16 @@ soiltemp <- ggplot(met, aes(x=dt_use)) +
   geom_line(aes(y=Ts_50, color='50cm')) +
   ylim(-50,50) + #add this y lim since Ts_20 went back and had high readings 
   ggtitle('soil temp (deg C)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(soiltemp)
 soiltemp
 
-airtemp <- ggplot(met, aes(x= dt_use, y = Ta_C)) + 
+airtemp <- ggplot(met, aes(x= dt_use, y = Ta_C_use)) + 
   geom_point() +
   ggtitle('air temp (deg C)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(airtemp)
@@ -123,32 +134,42 @@ airtemp
 rh <- ggplot(met, aes(x= dt_use, y = RH_percent)) + 
   geom_point() +
   ggtitle('RH (%)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(rh)
 rh
 
-swrad <- ggplot(met, aes(x = dt_use)) +
+swrad <- ggplot(met %>% 
+                  drop_na(Rs_in),
+                aes(x = dt_use)) +
   geom_line(aes(y=Rs_in, color='SW in')) +
   geom_line(aes(y=Rs_out, color='SW out')) + 
   ggtitle('shortwave rad (W/m2)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(swrad)
 swrad
 
-lwrad <- ggplot(met, aes(x = dt_use)) +
+lwrad <- ggplot(met %>% 
+                  drop_na(Rl_in),
+                aes(x = dt_use)) +
   geom_line(aes(y=Rl_in, color='LW in')) +
   geom_line(aes(y=Rl_out, color='LW out')) + 
   ggtitle('longwave rad (W/m2)') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(lwrad)
 lwrad
 
-albedo <- ggplot(met, aes(x= dt_use, y = albedo)) + 
+albedo <- ggplot(met %>% 
+                   drop_na(albedo),
+                 aes(x= dt_use, y = albedo)) + 
   geom_point() +
   ggtitle('albedo') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(albedo)
@@ -157,6 +178,7 @@ albedo
 rainplot <- ggplot(rain, aes(x= dt_use, y = precip_mm)) + 
   geom_point() +
   ggtitle('rain_mm') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(rainplot)
@@ -167,6 +189,7 @@ stageplot <- ggplot(stage %>%
                     aes(x= dt_use, y = stage_cm)) + 
   geom_point() +
   ggtitle('stage_update_cm') +
+  scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
 #ggplotly(stageplot)
