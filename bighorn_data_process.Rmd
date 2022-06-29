@@ -64,6 +64,11 @@ stage <- left_join(stage, baro, by="dt_use")
 stage <- stage %>%
   mutate(stage_kPa = Pw_kPa -Pa_kPa,
          stage_cm = stage_kPa * 10.197162129779)
+
+write.csv(met, here('outputs', 'bighorn_met.csv'))
+write.csv(rain, here('outputs', 'bighorn_rain.csv'))
+write.csv(stage, here('outputs', 'bighorn_stage.csv'))
+
 ```
 
 ## Time series of each variable
@@ -199,7 +204,7 @@ stageplot
 
 ## Rain and Stage at 15 mins
 
-```{rain and stage}
+```{r rain and stage}
 
 stage_compare <- stage %>%
   filter(dt_use > '2020-12-17')
@@ -221,6 +226,38 @@ compare <- ggplot(stage_compare %>%
   scale_y_continuous(sec.axis = sec_axis(~.*50, name = "stage_cm"))
 
 compare
+
+```
+
+```{r add salt slug data in}
+q_obs <- read_csv(here('bighorn_discharge.csv')) %>%
+  mutate(dt_use = mdy_hm(datetime)) %>%
+  filter(dt_use = ymd_hms('2020-12-19 00:00:00'))
+
+#join the stage and q obs
+q_stage <- full_join(stage, q_obs, by="dt_use") %>%
+  mutate(., stage_corr_cm = stage_cm - 1) %>%
+  mutate(., stage_corr_cm = if_else(dt_use > ymd_hms('2021-05-07 12:00:00'),
+                         stage_corr_cm + 3, stage_corr_cm))
+
+#rating curve
+rat_curve <- ggplot(q_stage, aes(x=dt_use)) +
+  geom_line(aes(y=stage_corr_cm)) +
+  geom_point(aes(y=manual_stage_cm), color='red')
+
+ggplotly(rat_curve)
+
+q_stage <- mutate(q_stage, q_Ls = (-1.461798 + 0.1875414 * stage_corr_cm)^2)
+
+#plot discharge
+q_plot = ggplot(q_stage, aes(x=dt_use)) +
+  geom_line(aes(y=q_Ls)) +
+  geom_point(aes(y=discharge_Ls),color='red')
+
+ggplotly(q_plot)
+
+#save csv in the outputs folder
+write.csv(q_stage, here('outputs', 'bighorn_q.csv'))
 
 ```
 
