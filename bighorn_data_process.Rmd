@@ -25,7 +25,7 @@ library(scales)
 
 ```{r load in data}
 # read in met data
-met <- read_csv(here('bighorn_met_composite.csv')) %>%
+met <- read_csv(here('raw_data', 'bighorn_met_composite.csv')) %>%
   mutate(dt_use = parse_date_time(datetime, 
                                   orders = c('%m/%d/%Y %H:%M',
                                              '%Y-%m-%d %H:%M'))) %>%
@@ -34,7 +34,7 @@ met <- read_csv(here('bighorn_met_composite.csv')) %>%
   mutate(Ta_C_use = coalesce(Ta_C, Ta2_C))
 
 # read in tipping bucket data
-rain <- read_csv(here('bighorn_rain_composite_new.csv')) %>%
+rain <- read_csv(here('raw_data', 'bighorn_rain_composite_new.csv')) %>%
   mutate(dt_use = parse_date_time(datetime, 
                                   orders = c('%m/%d/%Y %H:%M',
                                              '%Y-%m-%d %H:%M'))) %>%
@@ -42,7 +42,7 @@ rain <- read_csv(here('bighorn_rain_composite_new.csv')) %>%
   mutate(precip_mm = tips * 0.1)
 
 # read in stage data
-stage <- read_csv(here('bighorn_stage_composite_new.csv')) %>%
+stage <- read_csv(here('raw_data', 'bighorn_stage_composite_new.csv')) %>%
   mutate(dt_use = parse_date_time(DateTime, 
                                   orders = c('%m/%d/%Y %H:%M',
                                              '%m/%d/%y %I:%M:%S %p'))) %>%
@@ -50,7 +50,7 @@ stage <- read_csv(here('bighorn_stage_composite_new.csv')) %>%
   rename(Pw_kPa = P_kPa)
 
 # read in baro data
-baro <- read_csv(here('bighorn_baro_composite_new.csv')) %>%
+baro <- read_csv(here('raw_data' ,'bighorn_baro_composite_new.csv')) %>%
   mutate(dt_use = parse_date_time(DateTime, 
                                   orders = c('%m/%d/%Y %H:%M',
                                              '%m/%d/%y %I:%M:%S %p'))) %>%
@@ -230,7 +230,7 @@ compare
 ```
 
 ```{r add salt slug data in}
-q_obs <- read_csv(here('bighorn_discharge.csv')) %>%
+q_obs <- read_csv(here('raw_data', 'bighorn_discharge.csv')) %>%
   mutate(dt_use = mdy_hm(datetime)) %>%
   filter(dt_use = ymd_hms('2020-12-19 00:00:00'))
 
