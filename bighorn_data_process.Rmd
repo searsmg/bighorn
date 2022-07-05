@@ -75,13 +75,16 @@ write.csv(stage, here('outputs', 'bighorn_stage.csv'))
 
 ```{r look at variables}
 snowdepth <- ggplot(met, aes(x= dt_use, y = SnowD_m)) + 
-  geom_point() +
+  geom_line() +
   ggtitle('snow depth (m)') +
   scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
-#ggplotly(snowdepth)
+ggplotly(snowdepth)
 snowdepth
+
+#estimate - after Mar 20, 2022 no snow
+#estimate - after May 15, 2022 no snow
 
 netrad_old <- ggplot(met %>%
                        drop_na(Rn_Wm2),
@@ -232,7 +235,9 @@ compare
 ```{r add salt slug data in}
 q_obs <- read_csv(here('raw_data', 'bighorn_discharge.csv')) %>%
   mutate(dt_use = mdy_hm(datetime)) %>%
-  filter(dt_use = ymd_hms('2020-12-19 00:00:00'))
+  filter(dt_use >= ymd_hms('2020-12-19 00:00:00')) %>%
+  mutate(dt_use = round_date(dt_use, "15 minutes")) %>%
+  select(-c(datetime, type, comments))
 
 #join the stage and q obs
 q_stage <- full_join(stage, q_obs, by="dt_use") %>%
@@ -241,11 +246,11 @@ q_stage <- full_join(stage, q_obs, by="dt_use") %>%
                          stage_corr_cm + 3, stage_corr_cm))
 
 #rating curve
-rat_curve <- ggplot(q_stage, aes(x=dt_use)) +
+stage_compare_plot <- ggplot(q_stage, aes(x=dt_use)) +
   geom_line(aes(y=stage_corr_cm)) +
   geom_point(aes(y=manual_stage_cm), color='red')
 
-ggplotly(rat_curve)
+ggplotly(stage_compare_plot)
 
 q_stage <- mutate(q_stage, q_Ls = (-1.461798 + 0.1875414 * stage_corr_cm)^2)
 
