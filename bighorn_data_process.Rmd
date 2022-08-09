@@ -45,16 +45,18 @@ rain <- read_csv(here('raw_data', 'bighorn_rain_composite_new.csv')) %>%
 stage <- read_csv(here('raw_data', 'bighorn_stage_composite_new.csv')) %>%
   mutate(dt_use = parse_date_time(DateTime, 
                                   orders = c('%m/%d/%Y %H:%M',
+                                             '%m/%d/%Y %H:%M:%S',
                                              '%m/%d/%y %I:%M:%S %p'))) %>%
   select(-c(DateTime, T_C)) %>%
   rename(Pw_kPa = P_kPa)
 
 # read in baro data
 baro <- read_csv(here('raw_data' ,'bighorn_baro_composite_new.csv')) %>%
-  mutate(dt_use = parse_date_time(DateTime, 
+  mutate(dt_use = parse_date_time(datetime, 
                                   orders = c('%m/%d/%Y %H:%M',
-                                             '%m/%d/%y %I:%M:%S %p'))) %>%
-  select(-c(DateTime, T_C)) %>%
+                                             '%m/%d/%y %I:%M:%S %p',
+                                             '%m/%d/%Y %H:%M:%S'))) %>%
+  select(-c(datetime, T_C)) %>%
   rename(Pa_kPa = P_kPa)
 
 #join stage and baro DFs to get stage height
