@@ -43,19 +43,21 @@ rain <- read_csv(here('raw_data', 'bighorn_rain_composite_new.csv')) %>%
 
 # read in stage data
 stage <- read_csv(here('raw_data', 'bighorn_stage_composite_new.csv')) %>%
-  mutate(dt_use = parse_date_time(DateTime, 
-                                  orders = c('%m/%d/%Y %H:%M',
-                                             '%m/%d/%Y %H:%M:%S',
-                                             '%m/%d/%y %I:%M:%S %p'))) %>%
+  mutate(dt_use = mdy_hm(DateTime)) %>%
+  # mutate(dt_use = parse_date_time(DateTime, 
+  #                                 orders = c('%m/%d/%Y %H:%M',
+  #                                            '%m/%d/%Y %H:%M:%S',
+  #                                            '%m/%d/%y %I:%M:%S %p'))) %>%
   select(-c(DateTime, T_C)) %>%
   rename(Pw_kPa = P_kPa)
 
 # read in baro data
 baro <- read_csv(here('raw_data' ,'bighorn_baro_composite_new.csv')) %>%
-  mutate(dt_use = parse_date_time(datetime, 
-                                  orders = c('%m/%d/%Y %H:%M',
-                                             '%m/%d/%y %I:%M:%S %p',
-                                             '%m/%d/%Y %H:%M:%S'))) %>%
+  mutate(dt_use = mdy_hm(datetime)) %>%
+  # mutate(dt_use = parse_date_time(datetime, 
+  #                                 orders = c('%m/%d/%Y %H:%M',
+  #                                            '%m/%d/%y %I:%M:%S %p',
+  #                                            '%m/%d/%Y %H:%M:%S'))) %>%
   select(-c(datetime, T_C)) %>%
   rename(Pa_kPa = P_kPa)
 
@@ -202,7 +204,7 @@ stageplot <- ggplot(stage %>%
   scale_x_datetime(labels = date_format("%b-%Y")) +
   theme_bw()
 
-#ggplotly(stageplot)
+ggplotly(stageplot)
 stageplot
 
 ```
@@ -237,7 +239,7 @@ compare
 ```{r add salt slug data in}
 q_obs <- read_csv(here('raw_data', 'bighorn_discharge.csv')) %>%
   mutate(dt_use = mdy_hm(datetime)) %>%
-  #filter(dt_use >= ymd_hms('2020-12-19 00:00:00')) %>%
+  filter(dt_use >= ymd_hms('2021-06-01 00:00:00')) %>%
   mutate(dt_use = round_date(dt_use, "15 minutes")) %>%
   select(-c(datetime, type, comments))
 
@@ -259,7 +261,7 @@ q_stage <- full_join(stage, q_obs, by="dt_use") %>%
   mutate(., stage_corr_cm = ifelse(dt_use > ymd_hms('2021-05-07 12:00:00'),
                          stage_corr_cm + 3, stage_corr_cm)) %>%
     mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2022-05-03 13:15'),
-                         stage_cm + 0, stage_corr_cm)) %>%
+                         stage_cm + 2, stage_corr_cm)) %>%
       mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2022-05-19 14:15'),
                          stage_cm + 6, stage_corr_cm)) %>%
   mutate(., stage_corr_cm = ifelse(stage_corr_cm < 0, NA, stage_corr_cm))
