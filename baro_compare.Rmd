@@ -1,0 +1,200 @@
+---
+title: "Bighorn baro compare"
+author: "Megan Sears"
+date: "2024-11-8"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cerulean
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r open packages, include=FALSE}
+
+library(tidyverse)
+library(plotly)
+library(RColorBrewer)
+library(hexbin)
+
+theme_set(theme_bw(base_size = 20))
+
+```
+
+```{r, include = F}
+
+# prep data
+baro1 <- read_csv('./raw_data/bighorn_baro_composite_new.csv') %>%
+  mutate(baro = 'original',
+         datetime = mdy_hm(datetime)) %>%
+  filter(datetime > ymd('2024-06-04'))
+
+baro2 <- read_csv('./raw_data/bighorn_baro2_composite.csv') %>%
+  mutate(baro = 'shade',
+         datetime = mdy_hm(datetime))
+
+baro_combine <- bind_rows(baro1, baro2)
+
+```
+
+# Baro time series
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 10, fig.height = 6}
+
+compare <- ggplot(baro_combine, 
+                  aes(x = datetime, 
+                      y = P_kPa, 
+                      color = baro)) +
+  geom_line() +
+  scale_color_brewer(palette = "Dark2",
+                     direction=-1) 
+
+ggplotly(compare)
+
+```
+
+# 1:1 comparison
+
+Baro shade vs baro original
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 10, fig.height = 6}
+# left join so can compare 1:1
+baro_1to1 <- left_join(baro2, baro1, by = 'datetime')
+
+# get r-square of the 1:1
+lm <- lm(P_kPa.y ~ P_kPa.x, 
+         data = baro_1to1)
+
+r_2 <- summary(lm)$r.squared
+
+oneone <- ggplot(baro_1to1, aes(P_kPa.x, 
+                      P_kPa.y)) + 
+  geom_point() +
+  geom_abline(slope = 1, 
+              intercept = 0, 
+              color = "red", 
+              linetype = "dashed") +
+  labs(y = 'Original', 
+       x = 'Shade') +
+  annotate("text", 
+         x = -Inf, 
+         y = Inf, 
+         hjust = -0.3, 
+         vjust = 2, 
+         label = paste("R² =", round(r_2,2)), 
+         color = "blue")
+
+
+ggplotly(oneone)
+
+```
+
+# Baro difference time series
+
+- Shade minus original = difference
+- If it's negative: original baro pressure > shade baro pressure
+- If it's positive: original < shade
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE,fig.width = 10, fig.height = 6}
+
+# Create the difference column
+baro_1to1 <- baro_1to1 %>%
+  mutate(difference = P_kPa.x - P_kPa.y,
+         hour = hour(datetime) + minute(datetime) / 60)
+
+ts_diff <- ggplot(baro_1to1, aes(x = datetime, 
+                      y = difference)) +
+  geom_point() +
+  labs(x = 'Datetime', 
+       y = 'Difference (P_kPa)')
+
+ggplotly(ts_diff)
+
+```
+
+# Baro time of day difference 
+
+- Shade minus original = difference
+- If it's negative: original baro pressure > shade baro pressure
+- If it's positive: original < shade
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE,fig.width = 10, fig.height = 6}
+
+# Plot with time of day on x-axis and difference on y-axis
+tod <- ggplot(baro_1to1, aes(x = hour, 
+                      y = difference)) +
+  geom_point() +
+  labs(x = 'Time of Day', 
+       y = 'Difference (P_kPa)')
+
+ggplotly(tod)
+
+# hex bins to see counts
+tod_hex <- ggplot(baro_1to1, aes(x = hour, y = difference)) +
+  geom_hex(bins = 40) + 
+  scale_fill_viridis_c() +
+  labs(x = 'Time of Day', y = 'Difference (P_kPa)')
+
+ggplotly(tod_hex)
+
+```
+
+# What does this mean for stage?
+
+Stage using shade baro and original baro
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE,fig.width = 10, fig.height = 6}
+
+stage_pt <- read_csv('./raw_data/bighorn_stage_composite_new.csv') %>%
+  rename(Pw_kPa = 2,
+         datetime = 1) %>%
+  mutate(datetime = mdy_hm(datetime))
+
+combine <- left_join(baro_1to1,
+                     stage_pt,
+                     by = 'datetime') %>%
+  mutate(stage_shade_kPa = Pw_kPa - P_kPa.x,
+         stage_orig_kPa = Pw_kPa - P_kPa.y) %>%
+  mutate(stage_shade_cm = (stage_shade_kPa*101.9716)/10,
+         stage_orig_cm = (stage_orig_kPa*101.9716)/10) 
+         
+# Extract specific colors from Dark2
+dark2_colors <- brewer.pal(n = 8, name = "Dark2")  # Extracts 8 colors from Dark2
+orange_color <- dark2_colors[2]
+green_color <- dark2_colors[1]
+
+stage_TS <- ggplot(combine, aes(x = datetime, 
+                    y = stage_orig_cm, 
+                    color = "Original")) +
+  geom_line() +
+  geom_line(aes(y = stage_shade_cm, 
+                color = "Shade")) +
+  scale_color_manual(values = c("Original" = orange_color, 
+                                "Shade" = green_color)) +
+  labs(x = 'Datetime', y = 'Stage_cm') 
+
+ggplotly(stage_TS)
+
+```
+
+# Difference in stage
+
+- Shade minus original = difference
+- If it's negative: original stage > shade stage
+- If it's positive: original < shade
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE,fig.width = 10, fig.height = 6}
+
+combine <- combine %>%
+  mutate(stage_diff = stage_shade_cm - stage_orig_cm)
+
+stage_TS_diff <- ggplot(combine, aes(x = datetime, 
+                    y = stage_diff)) +
+  geom_line() +
+  labs(x = 'Datetime', y = 'Stage difference (cm)') 
+
+ggplotly(stage_TS_diff)
+
+```
+

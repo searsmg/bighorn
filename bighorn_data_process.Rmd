@@ -42,7 +42,7 @@ rain <- read_csv(here('raw_data', 'bighorn_rain_composite_new.csv')) %>%
   mutate(precip_mm = tips * 0.1)
 
 # read in stage data
-stage <- read_csv(here('raw_data', 'bighorn_stage_composite_new.csv')) %>%
+stage <- read_csv(here('raw_data', 'bighorn_stage_composite.csv')) %>%
   mutate(dt_use = mdy_hm(DateTime)) %>%
   # mutate(dt_use = parse_date_time(DateTime, 
   #                                 orders = c('%m/%d/%Y %H:%M',
@@ -243,8 +243,13 @@ q_obs <- read_csv(here('raw_data', 'bighorn_discharge.csv')) %>%
   mutate(dt_use = round_date(dt_use, "15 minutes")) %>%
   select(-c(datetime, type, comments))
 
+stage_obs <- read_csv(here('raw_data', 'bighorn_stageplate.csv')) %>%
+  mutate(datetime = mdy_hm(datetime)) %>%
+  rename(dt_use = datetime)
+
+
 #join the stage and q obs
-q_stage <- full_join(stage, q_obs, by="dt_use") %>%
+stage_corr <- stage %>%
   mutate(., stage_corr_cm = stage_cm + 4) %>%
   mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2017-01-22 08:00') & 
                                       dt_use < ymd_hm('2017-02-12 21:00'),
@@ -257,14 +262,32 @@ q_stage <- full_join(stage, q_obs, by="dt_use") %>%
   mutate(., stage_corr_cm = ifelse(dt_use > ymd_hms('2019-07-17 12:00:00'),
                                    stage_corr_cm + 6, stage_corr_cm)) %>%
   mutate(., stage_corr_cm = ifelse(dt_use > ymd_hms('2020-10-01 00:00:00'), 
-                                                    stage_cm - 1, stage_corr_cm)) %>%
+                                                    stage_corr_cm - 1, stage_corr_cm)) %>%
   mutate(., stage_corr_cm = ifelse(dt_use > ymd_hms('2021-05-07 12:00:00'),
                          stage_corr_cm + 3, stage_corr_cm)) %>%
     mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2022-05-03 13:15'),
-                         stage_cm + 2, stage_corr_cm)) %>%
+                         stage_corr_cm + 2, stage_corr_cm)) %>%
       mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2022-05-19 14:15'),
-                         stage_cm + 6, stage_corr_cm)) %>%
-  mutate(., stage_corr_cm = ifelse(stage_corr_cm < 0, NA, stage_corr_cm))
+                         stage_corr_cm + 6, stage_corr_cm)) %>%
+  mutate(., stage_corr_cm = ifelse(stage_corr_cm < 4, NA, stage_corr_cm)) %>%
+  mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2023-04-18 10:00'),
+                         stage_corr_cm - 9.5, stage_corr_cm)) #%>%
+  # mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2023-05-24 10:00'),
+  #                        stage_corr_cm - 4.5, stage_corr_cm)) %>%
+  # mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2023-05-31 11:30'),
+  #                        stage_corr_cm - 3, stage_corr_cm)) %>%
+  # mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2023-06-06 10:00'),
+  #                        stage_corr_cm - 2, stage_corr_cm)) %>%
+  # mutate(., stage_corr_cm = ifelse(dt_use > ymd_hm('2023-06-16 09:00'),
+  #                        stage_corr_cm - 7, stage_corr_cm))
+
+
+stage_plot <- ggplot(stage_corr, aes(dt_use, stage_corr_cm)) +
+  geom_line() +
+  geom_point(data = stage_obs, aes(dt_use, manual_stage_cm),
+             color = 'blue')
+
+ggplotly(stage_plot)
 
 #looking at measured stage to obs stage
 # stage_compare_plot <- ggplot(q_stage, aes(x=dt_use)) +
